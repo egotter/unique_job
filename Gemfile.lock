@@ -10,7 +10,7 @@ GEM
   specs:
     connection_pool (2.2.3)
     minitest (5.11.3)
-    rack (2.2.2)
+    rack (2.2.3)
     rack-protection (2.0.8.1)
       rack
     rake (12.3.2)
