@@ -1,7 +1,9 @@
+require 'unique_job/logging'
+
 module UniqueJob
   class JobHistory
     def initialize(worker_class, queueing_class, ttl)
-      @key = "#{self.class}:#{queueing_class}:#{worker_class}"
+      @key = "#{self.class}:#{queueing_class.name.split('::')[-1]}:#{worker_class}"
       @ttl = ttl
     end
 
@@ -20,7 +22,7 @@ module UniqueJob
     end
 
     def exists?(val)
-      redis.exists(key(val))
+      redis.exists?(key(val))
     end
 
     def add(val)
@@ -44,18 +46,20 @@ module UniqueJob
     end
 
     module RescueAllRedisErrors
+      include Logging
+
       %i(
         ttl
         exists?
         add
       ).each do |method_name|
         define_method(method_name) do |*args, &blk|
-          start = Time.zone.now
+          start = Time.now
           super(*args, &blk)
         rescue => e
-          elapsed = Time.zone.now - start
-          Rails.logger.warn "Rescue all errors in #{self.class}##{method_name} #{e.inspect} elapsed=#{sprintf("%.3f sec", elapsed)}"
-          Rails.logger.debug { e.backtrace.join("\n") }
+          elapsed = Time.now - start
+          logger.warn "Rescue all errors in #{self.class}##{method_name} #{e.inspect} elapsed=#{sprintf("%.3f sec", elapsed)}"
+          logger.debug { e.backtrace.join("\n") }
           nil
         end
       end
