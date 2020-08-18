@@ -24,7 +24,7 @@ module UniqueJob
       history = job_history(worker)
 
       if history.exists?(unique_key)
-        logger.info { "#{self.class}##{__method__} Skip duplicate job for #{history.ttl} seconds, remaining #{history.ttl(unique_key)} seconds worker=#{worker.class} args=#{truncate(args.inspect)}" }
+        logger.info { "#{self.class}##{__method__} Skip duplicate job for #{history.ttl} seconds, remaining #{history.ttl(unique_key)} seconds worker=#{worker.class} args=#{truncate(args.inspect)} key=#{unique_key}" }
 
         perform_callback(worker, :after_skip, args)
 
