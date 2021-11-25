@@ -8,9 +8,10 @@ module UniqueJob
     def perform_if_unique(worker, args, &block)
       if worker.respond_to?(:unique_key)
         unique_key = worker.unique_key(*args)
+        logger.debug { "[UniqueJob] Calculate unique key worker=#{worker.class} key=#{unique_key}" }
 
         if unique_key.nil? || unique_key.to_s.empty?
-          logger.warn { "#{self.class}##{__method__} Key is blank worker=#{worker.class} args=#{truncate(args.inspect)}" }
+          logger.warn { "[UniqueJob] Don't check a job with a blank key worker=#{worker.class} key=#{unique_key}" }
           yield
         elsif perform_unique_check(worker, args, unique_key.to_s)
           yield
@@ -24,7 +25,7 @@ module UniqueJob
       history = job_history(worker)
 
       if history.exists?(unique_key)
-        logger.info { "#{self.class}##{__method__} Skip duplicate job for #{history.ttl} seconds, remaining #{history.ttl(unique_key)} seconds worker=#{worker.class} args=#{truncate(args.inspect)} key=#{unique_key}" }
+        logger.info { "[UniqueJob] Skip duplicate job worker=#{worker.class} key=#{unique_key}" }
 
         perform_callback(worker, :after_skip, args)
 
@@ -59,8 +60,7 @@ module UniqueJob
             worker.send(callback_name, *args)
           end
         rescue ArgumentError => e
-          message = "The number of parameters of the callback method (#{parameters.size}) is not the same as the number of arguments (#{args.size})"
-          raise ArgumentError.new("#{self.class}:#{worker.class} #{message} callback_name=#{callback_name} args=#{args.inspect} parameters=#{parameters.inspect}")
+          raise ArgumentError.new("[UniqueJob] Invalid parameters callback=#{callback_name}")
         end
       end
     end
