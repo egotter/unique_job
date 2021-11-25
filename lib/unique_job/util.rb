@@ -13,22 +13,22 @@ module UniqueJob
         if unique_key.nil? || unique_key.to_s.empty?
           logger.warn { "[UniqueJob] Don't check a job with a blank key worker=#{worker.class} key=#{unique_key}" }
           yield
-        elsif perform_unique_check(worker, args, unique_key.to_s)
+        elsif check_uniqueness(worker, unique_key.to_s)
           yield
+        else
+          logger.debug { "[UniqueJob] Duplicate job skipped worker=#{worker.class} key=#{unique_key}" }
+          perform_callback(worker, :after_skip, args)
+          nil
         end
       else
         yield
       end
     end
 
-    def perform_unique_check(worker, args, unique_key)
+    def check_uniqueness(worker, unique_key)
       history = job_history(worker)
 
       if history.exists?(unique_key)
-        logger.info { "[UniqueJob] Skip duplicate job worker=#{worker.class} key=#{unique_key}" }
-
-        perform_callback(worker, :after_skip, args)
-
         false
       else
         history.add(unique_key)

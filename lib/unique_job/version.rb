@@ -1,3 +1,3 @@
 module UniqueJob
-  VERSION = "0.3.0.pre"
+  VERSION = "0.3.1.pre"
 end
