@@ -4,6 +4,10 @@ module UniqueJob
   class ClientMiddleware
     include Util
 
+    def initialize(redis_options)
+      @redis_options = redis_options
+    end
+
     def call(worker_str, job, queue, redis_pool, &block)
       if job.has_key?('at')
         # perform_in or perform_at

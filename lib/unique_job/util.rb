@@ -38,6 +38,7 @@ module UniqueJob
 
     def job_history(worker)
       ttl = worker.respond_to?(:unique_in) ? worker.unique_in : 3600
+      JobHistory.redis_options = @redis_options
       JobHistory.new(worker.class, self.class, ttl)
     end
 

@@ -40,8 +40,10 @@ module UniqueJob
     end
 
     class << self
+      attr_accessor :redis_options
+
       def redis
-        @redis ||= Redis.client(ENV['REDIS_HOST'])
+        @redis ||= Redis.new(redis_options)
       end
     end
 
