@@ -60,7 +60,7 @@ module UniqueJob
           super(*args, &blk)
         rescue => e
           elapsed = Time.now - start
-          logger.warn "Rescue all errors in #{self.class}##{method_name} #{e.inspect} elapsed=#{sprintf("%.3f sec", elapsed)}"
+          logger.warn "[UniqueJob] Rescue all errors in #{self.class}##{method_name} #{e.inspect} elapsed=#{sprintf("%.3f sec", elapsed)}"
           logger.debug { e.backtrace.join("\n") }
           nil
         end
