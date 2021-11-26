@@ -10,10 +10,7 @@ module UniqueJob
         unique_key = worker.unique_key(*args)
         logger.debug { "[UniqueJob] Calculate unique key worker=#{worker.class} key=#{unique_key}" }
 
-        if unique_key.nil? || unique_key.to_s.empty?
-          logger.warn { "[UniqueJob] Don't check a job with a blank key worker=#{worker.class} key=#{unique_key}" }
-          yield
-        elsif check_uniqueness(worker, unique_key.to_s)
+        if check_uniqueness(worker, unique_key)
           yield
         else
           logger.debug { "[UniqueJob] Duplicate job skipped worker=#{worker.class} key=#{unique_key}" }
@@ -25,13 +22,18 @@ module UniqueJob
       end
     end
 
-    def check_uniqueness(worker, unique_key)
+    def check_uniqueness(worker, key)
+      if key.nil? || key.to_s.empty?
+        logger.warn { "[UniqueJob] Don't check a job with a blank key worker=#{worker.class} key=#{key}" }
+        return false
+      end
+
       history = job_history(worker)
 
-      if history.exists?(unique_key)
+      if history.exists?(key)
         false
       else
-        history.add(unique_key)
+        history.add(key)
         true
       end
     end
