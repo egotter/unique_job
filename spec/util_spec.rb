@@ -73,4 +73,25 @@ RSpec.describe UniqueJob::Util do
       end
     end
   end
+
+  describe '#job_history' do
+    let(:worker) { double('worker') }
+    subject { instance.job_history(worker) }
+
+    context 'The worker has #unique_in' do
+      before { allow(worker).to receive(:unique_in).and_return(60) }
+      it do
+        expect(UniqueJob::JobHistory).to receive(:new).with(worker.class, instance.class, 60)
+        subject
+      end
+    end
+
+    context "The worker doesn't have #unique_in" do
+      before { allow(worker).to receive(:respond_to?).with(:unique_in).and_return(false) }
+      it do
+        expect(UniqueJob::JobHistory).to receive(:new).with(worker.class, instance.class, 3600)
+        subject
+      end
+    end
+  end
 end
