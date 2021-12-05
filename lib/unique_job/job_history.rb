@@ -42,8 +42,15 @@ module UniqueJob
     class << self
       attr_accessor :redis_options
 
+      MX = Mutex.new
+
       def redis
-        @redis ||= Redis.new(redis_options)
+        MX.synchronize do
+          unless @redis
+            @redis = Redis.new(redis_options)
+          end
+        end
+        @redis
       end
     end
 
