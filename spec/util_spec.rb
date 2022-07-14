@@ -29,12 +29,12 @@ RSpec.describe UniqueJob::Util do
       end
 
       context 'Succeed the uniqueness check' do
-        before { allow(instance).to receive(:check_uniqueness).with(worker, unique_key).and_return(true) }
+        before { allow(instance).to receive(:unique?).with(worker, unique_key).and_return(true) }
         it { is_expected.to eq(block.call) }
       end
 
       context 'Fail the uniqueness check' do
-        before { allow(instance).to receive(:check_uniqueness).with(any_args).and_return(false) }
+        before { allow(instance).to receive(:unique?).with(any_args).and_return(false) }
         it do
           expect(instance).to receive(:perform_callback).with(worker, :after_skip, args)
           is_expected.to be_nil
@@ -48,12 +48,12 @@ RSpec.describe UniqueJob::Util do
     end
   end
 
-  describe "#check_uniqueness" do
+  describe "#unique?" do
     let(:worker) { double('worker') }
     let(:unique_key) { 'key' }
     let(:history) { double('job_history') }
     let(:existence) { nil }
-    subject { instance.check_uniqueness(worker, unique_key) }
+    subject { instance.unique?(worker, unique_key) }
 
     before do
       allow(instance).to receive(:job_history).with(worker).and_return(history)

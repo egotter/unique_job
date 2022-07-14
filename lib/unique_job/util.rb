@@ -10,7 +10,7 @@ module UniqueJob
         unique_key = worker.unique_key(*job['args'])
         logger.debug { "[UniqueJob] Unique key calculated worker=#{job['class']} key=#{unique_key}" }
 
-        if check_uniqueness(worker, unique_key)
+        if unique?(worker, unique_key)
           yield
         else
           logger.debug { "[UniqueJob] Duplicate job skipped worker=#{job['class']} key=#{unique_key}" }
@@ -22,7 +22,7 @@ module UniqueJob
       end
     end
 
-    def check_uniqueness(worker, key)
+    def unique?(worker, key)
       if key.nil? || key.to_s.empty?
         logger.warn { "[UniqueJob] Don't check a job with a blank key worker=#{worker.class} key=#{key}" }
         return false
