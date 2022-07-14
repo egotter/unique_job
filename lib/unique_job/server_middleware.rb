@@ -9,7 +9,7 @@ module UniqueJob
     end
 
     def call(worker, msg, queue, &block)
-      perform_if_unique(worker, msg, &block)
+      perform(worker, msg, &block)
     end
   end
 end

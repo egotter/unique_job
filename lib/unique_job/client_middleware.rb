@@ -18,7 +18,7 @@ module UniqueJob
         else
           worker = worker_str.new
         end
-        perform_if_unique(worker, job, &block)
+        perform(worker, job, &block)
       end
     end
   end

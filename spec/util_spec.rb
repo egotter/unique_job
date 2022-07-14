@@ -15,13 +15,13 @@ RSpec.describe UniqueJob::Util do
     end
   end
 
-  describe "#perform_if_unique" do
+  describe "#perform" do
     let(:worker) { TestUtilWorker.new }
     let(:args) { ['arg1', 'arg2'] }
     let(:job) { {'class' => TestUtilWorker.to_s, 'args' => args} }
     let(:block) { Proc.new { 'result' } }
     let(:unique_key) { 'key' }
-    subject { instance.perform_if_unique(worker, job, &block) }
+    subject { instance.perform(worker, job, &block) }
 
     context 'The worker has #unique_key' do
       before do

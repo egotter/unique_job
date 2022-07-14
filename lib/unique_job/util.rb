@@ -5,7 +5,7 @@ module UniqueJob
   module Util
     include Logging
 
-    def perform_if_unique(worker, job, &block)
+    def perform(worker, job, &block)
       if worker.respond_to?(:unique_key)
         unique_key = worker.unique_key(*job['args'])
         logger.debug { "[UniqueJob] Unique key calculated worker=#{job['class']} key=#{unique_key}" }
