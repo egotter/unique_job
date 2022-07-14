@@ -5,16 +5,16 @@ module UniqueJob
   module Util
     include Logging
 
-    def perform_if_unique(worker, args, &block)
+    def perform_if_unique(worker, job, &block)
       if worker.respond_to?(:unique_key)
-        unique_key = worker.unique_key(*args)
-        logger.debug { "[UniqueJob] Calculate unique key worker=#{worker.class} key=#{unique_key}" }
+        unique_key = worker.unique_key(*job['args'])
+        logger.debug { "[UniqueJob] Unique key calculated worker=#{job['class']} key=#{unique_key}" }
 
         if check_uniqueness(worker, unique_key)
           yield
         else
-          logger.debug { "[UniqueJob] Duplicate job skipped worker=#{worker.class} key=#{unique_key}" }
-          perform_callback(worker, :after_skip, args)
+          logger.debug { "[UniqueJob] Duplicate job skipped worker=#{job['class']} key=#{unique_key}" }
+          perform_callback(worker, :after_skip, job['args'])
           nil
         end
       else

@@ -5,16 +5,26 @@ RSpec.describe UniqueJob::Util do
 
   let(:instance) { TestUniqueJobUtil.new }
 
+  class TestUtilWorker
+    def unique_key(*args, **kwargs)
+      args.inspect + kwargs.inspect
+    end
+
+    def unique_in
+      10
+    end
+  end
+
   describe "#perform_if_unique" do
-    let(:worker) { double('worker') }
+    let(:worker) { TestUtilWorker.new }
     let(:args) { ['arg1', 'arg2'] }
+    let(:job) { {'class' => TestUtilWorker.to_s, 'args' => args} }
     let(:block) { Proc.new { 'result' } }
     let(:unique_key) { 'key' }
-    subject { instance.perform_if_unique(worker, args, &block) }
+    subject { instance.perform_if_unique(worker, job, &block) }
 
     context 'The worker has #unique_key' do
       before do
-        allow(worker).to receive(:respond_to?).with(:unique_key).and_return(true)
         allow(worker).to receive(:unique_key).with(*args).and_return(unique_key)
       end
 
