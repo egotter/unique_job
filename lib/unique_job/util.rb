@@ -11,6 +11,7 @@ module UniqueJob
         logger.debug { "[UniqueJob] Unique key calculated worker=#{job['class']} key=#{unique_key}" }
 
         if unique?(worker, unique_key)
+        elsif unique?(worker, unique_key)
           yield
         else
           logger.debug { "[UniqueJob] Duplicate job skipped worker=#{job['class']} key=#{unique_key}" }
@@ -42,14 +43,6 @@ module UniqueJob
       ttl = worker.respond_to?(:unique_in) ? worker.unique_in : 3600
       JobHistory.redis_options = @redis_options
       JobHistory.new(worker.class, self.class, ttl)
-    end
-
-    def truncate(text, length: 100)
-      if text.length > length
-        text.slice(0, length)
-      else
-        text
-      end
     end
 
     def perform_callback(worker, callback_name, args)
