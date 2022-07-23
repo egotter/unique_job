@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    unique_job (0.4.4)
+    unique_job (0.5.0)
       redis
       sidekiq (> 6.0, < 7.0)
 
