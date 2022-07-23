@@ -2,77 +2,31 @@ require 'unique_job/logging'
 
 module UniqueJob
   class JobHistory
-    def initialize(worker_class, queueing_class, ttl)
-      @key = "#{self.class}:#{queueing_class.name.split('::')[-1]}:#{worker_class}"
-      @ttl = ttl
+    include Logging
+
+    def initialize(middleware_name, redis)
+      @key_prefix = "#{self.class}:#{middleware_name.split('::')[-1]}"
+      @redis = redis
     end
 
-    def ttl(val = nil)
-      if val
-        redis.ttl(key(val))
-      else
-        @ttl
-      end
+    def exists?(v1, v2)
+      @redis.exists?(key(v1, v2))
+    rescue => e
+      logger.warn { "[UniqueJob] Redis#exists? failed v1=#{v1} v2=#{v2} exception=#{e.inspect}" }
+      nil
     end
 
-    def delete_all
-      redis.keys("#{@key}:*").each do |key|
-        redis.del(key)
-      end
-    end
-
-    def exists?(val)
-      redis.exists?(key(val))
-    end
-
-    def add(val)
-      redis.setex(key(val), @ttl, true)
+    def add(v1, v2, ttl)
+      @redis.setex(key(v1, v2), ttl, true)
+    rescue => e
+      logger.warn { "[UniqueJob] Redis#setex failed v1=#{v1} v2=#{v2} ttl=#{ttl} exception=#{e.inspect}" }
+      nil
     end
 
     private
 
-    def key(val)
-      "#{@key}:#{val}"
+    def key(v1, v2)
+      "#{@key_prefix}:#{v1}:#{v2}"
     end
-
-    def redis
-      self.class.redis
-    end
-
-    class << self
-      attr_accessor :redis_options
-
-      MX = Mutex.new
-
-      def redis
-        MX.synchronize do
-          unless @redis
-            @redis = Redis.new(redis_options)
-          end
-        end
-        @redis
-      end
-    end
-
-    module RescueAllRedisErrors
-      include Logging
-
-      %i(
-        ttl
-        exists?
-        add
-      ).each do |method_name|
-        define_method(method_name) do |*args, &blk|
-          start = Time.now
-          super(*args, &blk)
-        rescue => e
-          elapsed = Time.now - start
-          logger.warn "[UniqueJob] Rescue all errors in #{self.class}##{method_name} #{e.inspect} elapsed=#{sprintf("%.3f sec", elapsed)}"
-          logger.debug { e.backtrace.join("\n") }
-          nil
-        end
-      end
-    end
-    prepend RescueAllRedisErrors
   end
 end

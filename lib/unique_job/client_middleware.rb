@@ -5,7 +5,8 @@ module UniqueJob
     include Util
 
     def initialize(redis_options)
-      @redis_options = redis_options
+      @history = JobHistory.new(self.class.name, Redis.new(redis_options))
+      @context = 'Client'
     end
 
     def call(worker_str, job, queue, redis_pool, &block)

@@ -7,42 +7,27 @@ module UniqueJob
 
     def perform(worker, job, &block)
       if worker.respond_to?(:unique_key)
-        unique_key = worker.unique_key(*job['args'])
-        logger.debug { "[UniqueJob] Unique key calculated worker=#{job['class']} key=#{unique_key}" }
+        key = worker.unique_key(*job['args'])
+        logger.debug { "[UniqueJob] Unique key calculated context=#{@context} worker=#{job['class']} key=#{key}" }
 
-        if unique?(worker, unique_key)
-        elsif unique?(worker, unique_key)
+        if key.nil? || key.to_s.empty?
+          logger.warn { "[UniqueJob] Skip history check context=#{@context} worker=#{job['class']} key=#{key}" }
           yield
         else
-          logger.debug { "[UniqueJob] Duplicate job skipped worker=#{job['class']} key=#{unique_key}" }
-          perform_callback(worker, :after_skip, job['args'])
-          nil
+          if @history.exists?(job['class'], key)
+            logger.info { "[UniqueJob] Duplicate job skipped context=#{@context} worker=#{job['class']} key=#{key}" }
+            perform_callback(worker, :after_skip, job['args'])
+            nil
+          else
+            logger.debug { "[UniqueJob] Start job context=#{@context} worker=#{job['class']} key=#{key}" }
+            ttl = worker.respond_to?(:unique_in) ? worker.unique_in : 3600
+            @history.add(job['class'], key, ttl)
+            yield
+          end
         end
       else
         yield
       end
-    end
-
-    def unique?(worker, key)
-      if key.nil? || key.to_s.empty?
-        logger.warn { "[UniqueJob] Don't check a job with a blank key worker=#{worker.class} key=#{key}" }
-        return false
-      end
-
-      history = job_history(worker)
-
-      if history.exists?(key)
-        false
-      else
-        history.add(key)
-        true
-      end
-    end
-
-    def job_history(worker)
-      ttl = worker.respond_to?(:unique_in) ? worker.unique_in : 3600
-      JobHistory.redis_options = @redis_options
-      JobHistory.new(worker.class, self.class, ttl)
     end
 
     def perform_callback(worker, callback_name, args)
